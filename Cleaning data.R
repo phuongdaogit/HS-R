@@ -35,6 +35,7 @@ pid_test #4
 '%!in%' <- function(x,y)!('%in%'(x,y))
 dat <- dat |> filter(pid %!in% pid_test)
 
+<<<<<<< HEAD
 dim(dat)[1] #213
 
 ### NOTES -----------------------------------------------------------
@@ -87,6 +88,8 @@ dat |> filter (pid %in% pid_cc0) |> view()
 
 
 
+=======
+>>>>>>> 51cacbf80030c1829cdea38aabb255bf0cd50613
 ## Checking on duplicate consumers by looking at name
 dat |> select(consumer_name) |> mutate(consumer_name = tolower(str_trim(consumer_name))) |>
   filter(consumer_name !="") |>
@@ -98,6 +101,7 @@ dat |> select(consumer_name) |> mutate(consumer_name = tolower(str_trim(consumer
 ## Now we explore the duplicates individually 
   dat |> filter(grepl("alexa roman", consumer_name, ignore.case=TRUE)) |> view() 
 ## Alexa has two records both are done throughly 
+<<<<<<< HEAD
   
   
   
@@ -118,6 +122,8 @@ dat |> select(consumer_name) |> mutate(consumer_name = tolower(str_trim(consumer
   table(dat$cbo_name)
   dat$cbo_name <- factor(dat$cbo_name, levels = c ("PC Setting","HCCI","HOPE"))
   table(dat$cbo_name)
+=======
+>>>>>>> 51cacbf80030c1829cdea38aabb255bf0cd50613
 
 ## Correction the typo of pro_name
 ### Vidya Sharma has 19 different variations
