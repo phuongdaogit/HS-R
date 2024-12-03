@@ -59,8 +59,8 @@ dim(dat)[1] #120
 # CONSENT COMPLETE VARIABLE--------------------------------------------------
 ## The number of consent_complete is 0, not finished
 dat |> select(consent_complete) |> table() # 5 cases not completed consent.
-dat |> filter(consent_complete ==0) |> 
-  select(matches("consent", ignore.case=TRUE), matches("survey_complete", ignore.case=TRUE)) |> view()
+#dat |> filter(consent_complete ==0) |> 
+  #select(matches("consent", ignore.case=TRUE), matches("survey_complete", ignore.case=TRUE)) |> view()
 ## In 5 cases where complete_consent are 0, one participant consented to both form 1, and 2. 
 ## The Other 4 cases marked all consent questions as 0. Need to go back to check the form.
 ## Since all five participant completed the survey, we keep them in for now.  
@@ -69,7 +69,7 @@ dat |> filter(consent_complete ==0) |>
 # SURVEY COMPLETE VARIABLE ------------------------------------------------
 ## Survey complete marked as 0: 14| marked as 2: 106
 dat |> select(survey_complete) |> table()
-dat |> filter(survey_complete ==0) |> view()
+#dat |> filter(survey_complete ==0) |> view()
 
 ## Confusion about how the variable is assigned values.
 
@@ -88,38 +88,38 @@ dat |> select(consumer_name) |> mutate(consumer_name = tolower(str_trim(consumer
 ### 1. Alexa roman: pid 129 & 149 same email, phone numbers are one digit different, both survey and consent completed
 ### The surveys were done in two different locations, on two different day. 
 ### Drop 129 but need to reconsider later
-  dat |> filter(grepl("alexa roman", consumer_name, ignore.case=TRUE)) |> view() 
-  dat |> filter(grepl("alexa roman", consumer_name, ignore.case=TRUE)) |>
-    select(pid, contains("time", ignore.case=TRUE)) |> view()
+  #dat |> filter(grepl("alexa roman", consumer_name, ignore.case=TRUE)) |> view() 
+  #dat |> filter(grepl("alexa roman", consumer_name, ignore.case=TRUE)) |>
+    #select(pid, contains("time", ignore.case=TRUE)) |> view()
   
 ### 2. george thomas:pid 50& 59. pid 50: survey comple marked as 0, pid 59: marked as 2
 #### Two records were on same day, different time
 ### pid 50 happened at 2023-12-01 16:13:41; pid 59 2023-12-01 21:18:27. 
-  dat |> filter(grepl("george thomas", consumer_name, ignore.case=TRUE)) |> view() 
+  #dat |> filter(grepl("george thomas", consumer_name, ignore.case=TRUE)) |> view() 
 
   
 ### 3. marcelle bondima: pid(220, 225, 248) has three records at three different dates. All 3 records had 0 for survey complete
 ### Pid 220 ended at question a15; The pid 225 ended at question h20; The pid 248 stopped at b12.
-  dat |> filter(grepl("marcelle bondima", consumer_name, ignore.case=TRUE)) |> view()
+  #dat |> filter(grepl("marcelle bondima", consumer_name, ignore.case=TRUE)) |> view()
 
 ### 4. margaret martinez: pid 101, 153. It seems the two records were entried twice, the answers are identical. 
   # Drop pid 101, keep 153 because pid 101 missed signature picture and there few answers marked NA
-  dat |> filter(grepl("margaret martinez", consumer_name, ignore.case=TRUE)) |> view()
+  #dat |> filter(grepl("margaret martinez", consumer_name, ignore.case=TRUE)) |> view()
 
 
 ### 5. mayda cantos, pid 100 & 152. This seem two records acidentally entered twice, the answers are identical. 
   # Drop pid 100 because it missed signature picture and there few answers marked NA 
-  dat |> filter(grepl("mayda cantos", consumer_name, ignore.case=TRUE)) |> view()
+  #dat |> filter(grepl("mayda cantos", consumer_name, ignore.case=TRUE)) |> view()
   
   
 ### 6. reyes gerena, pid 207, 209. The surveys were conducted on two different date.Both survey_complete ==2
   # There are few answers were not matches btween two surveys. Drop one for now. 
-  dat |> filter(grepl("reyes gerena", consumer_name, ignore.case=TRUE)) |> view()
+  #dat |> filter(grepl("reyes gerena", consumer_name, ignore.case=TRUE)) |> view()
 
 ### 7. shanika jones, pid 25 & 31. The surveys were on the same day and time frame were very close to each other. 
   # Drop pid 25 because it was marked survey_complete ==0
   
-  dat |> filter(grepl("shanika jones", consumer_name, ignore.case=TRUE)) |> view()
+  #dat |> filter(grepl("shanika jones", consumer_name, ignore.case=TRUE)) |> view()
   
 ## Removing duplicates-------------------------------------
   dim(dat)[1]#120
