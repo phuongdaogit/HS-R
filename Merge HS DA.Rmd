@@ -1,0 +1,218 @@
+---
+title: "Merge HS DA"
+author: "Phuong Dao"
+date: "2025-01-15"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#library(flextable)
+#library(writexl)
+library(tidyverse)
+library(dplyr)
+library(lubridate)
+library(gtsummary)
+#library(labelled)
+library(skimr)
+#library(psych)
+#library(forcats)
+#library(ggplot2)
+library(gt)
+```
+
+```{r import data, include=FALSE}
+
+data = read.csv("data/HSR2_24-06-04_1210.csv",na.strings = "NA")
+dim(data) #(216, 282)
+```
+
+## REMOVING TEST CASE--------------------------------------------------
+
+```{r removing test cases, include=FALSE}
+
+# Number of test case in the data set
+
+pid_test <- data |> filter(if_any(everything(), ~ grepl("test", .x, ignore.case=TRUE))) |> pull(pid)
+pid_test # There are three of them,pid="226","256","CUNY-SPH-02"
+dim(data)[1] #216
+
+## Removing test case 
+'%!in%' <- function(x,y)!('%in%'(x,y))
+data <- data |> filter(pid %!in% pid_test)
+
+dim(data)[1] #213
+
+```
+
+### NOTES -----------------------------------------------------------
+ 1. For single response questions, NA was assigned if the participants did not answer
+ 2. For multiple-response questions:
+ - The default values are 0 unless participants select an option, then the value changed to 1. 
+ - The followup question, "Other",form ___96. 
+ - The open-end question, form 96, for participant to specify if he/she wish to answer. 
+ For analytic purpose,participants whose answers for all single-response question marked NA did not bring much useful information, we should remove them. The removing criteria is that if participant has NA answer for entire questions from a1 to k4 (index from 22 to 156)
+
+```{r removing obs with no response, include=FALSE}
+
+pid_excl <- data |> filter(if_all(c(a1:k4), is.na)) |> pull(pid)
+length(pid_excl) #93
+## Removing 
+data <- data|> filter(pid %!in% pid_excl)
+
+dim(data)[1] #120
+
+```
+
+### Consent complete and Survey complete variables 
+There are 5 observations has value 0 on consent_complete variable. 
+Out of 5, one obs consent forms 1 and 2, and all five obs seems had good amount of answers, we keep them for now. 
+There are 14 obs having survey_complete equal 0
+```{r consent examination, include=FALSE, echo=TRUE}
+data |> select(consent_complete) |> table() # There are 5 obs has value 0 on the consent complete.
+data |> select(contains("consent")) |> filter(consent_complete==0)
+data |> select(survey_complete) |> table()
+```
+
+### Duplicated participant's names
+By examining the duplicates individually, we have:<br>
+- Alexa Roman: pid 129 & 149 same email, phone numbers are one digit different, both survey and consent completed. The surveys were done in two different locations, on two different day. For now, drop 129 but need to reconsider later. <br>
+- George Thomas:pid 50& 59. pid 50: survey complete marked as 0, pid 59: marked as 2. Two records were on same day, different time, pid 50 happened at 2023-12-01 16:13:41; pid 59 2023-12-01 21:18:27. <br>
+- Marcelle bondima: pid(220, 225, 248) has three records at three different dates. All 3 records had 0 for survey complete. Pid 220 ended at question a15; The pid 225 ended at question h20; The pid 248 stopped at b12. <br>
+- Margaret Martinez: pid 101, 153. It seems the two records were entried twice, the answers are identical. Drop pid 101, keep 153 because pid 101 missed signature picture and there few answers marked NA. <br>
+- Mayda Cantos, pid 100 & 152. This seem two records acidentally entered twice, the answers are identical. Drop pid 100 because it missed signature picture and there few answers marked NA. <br>
+
+- Reyes gerena, pid 207, 209. The surveys were conducted on two different date.Both survey_complete ==2. There are few answers were not matches btween two surveys. Drop one for now. <br>
+
+- Shanika Jones, pid 25 & 31. The surveys were on the same day and time frame were very close to each other. Drop pid 25 because it was marked survey_complete ==0
+  
+  
+
+```{r duplicate consumer_name, include=FALSE}
+# data |> group_by(consumer_name) |> summarise(n_count = n()) |> filter(n_count>1) #4"", 2: "Alexa roman "      2 "George Thomas ", 2 "MAYDA CANTOS", 3 "Marcelle Bondima", 2 "Margaret Martinez", 2 "Shanika Jones", 2 NA
+
+data |> mutate(consumer_name = tolower(str_trim(consumer_name))) |>
+  group_by(consumer_name) |> summarise(n_count = n()) |> filter(n_count >1)
+#Alexa roman
+data |> filter(grepl("alexa roman", consumer_name, ignore.case=TRUE)) |> view() 
+data |> filter(grepl("alexa roman", consumer_name, ignore.case=TRUE)) |>
+    select(pid, contains("time", ignore.case=TRUE)) |> view()
+# George Thomas
+data |> filter(grepl("george thomas", consumer_name, ignore.case=TRUE)) |> view() 
+# Marcelle Bondima
+data |> filter(grepl("marcelle bondima", consumer_name, ignore.case=TRUE)) |> view()
+
+# Margaret Martinez
+data |> filter(grepl("margaret martinez", consumer_name, ignore.case=TRUE)) |> view()
+
+# Mayda Cantos
+dat |> filter(grepl("mayda cantos", consumer_name, ignore.case=TRUE)) |> view()
+
+# Reyes Gerena
+dat |> filter(grepl("reyes gerena", consumer_name, ignore.case=TRUE)) |> view()
+
+# Shanika Jones
+dat |> filter(grepl("shanika jones", consumer_name, ignore.case=TRUE)) |> view()
+
+
+pid_dup_excl <- c("129", "50", "220", "248", "101", "100", "207", "25")
+dim(data)[1]#120
+data <- data |> filter(pid %!in% pid_dup_excl)
+dim(data)[1] #112
+```
+
+
+```{r structure of data, include=FALSE}
+#str(data)
+
+## Skim to check type of variables
+data |> select(,-c(1:21)) |> skim() |> select(skim_type) |> distinct() |> pull()
+
+```
+
+## Exploring Character Variables in the Questionaire
+
+```{r character variables, echo=FALSE}
+#str(data)
+
+## Skim to check type of variables
+data |> select(-c(1:21)) |> select(where(is.character)) |> skim() |>
+  select(- complete_rate)  ## Out of 12 character variables, 10 are the specify questions, including:"l196", "l496", "m296", "m396","p496", "p596", "p696", "p1096", "p1196", "p1696" 
+
+## l196: Pls specify what kinds of services did you receive at cbo
+data |> select(l196) |> filter(l196!= "") |> pull() # "housing", "Housing", "none ", "None ", "Counseling ", "ninguno ","Methedontretment", "none yet", "estoy comenzando ", "Housing ", "Home ownership ", "N/A"  
+
+##l496: pls specify what kinds of services did you want that you did not receive 
+# "I get help", "N/A", "Mental health","Help getting a service animal. ", "n/a", "N/A"     
+data |> select(l496) |> filter(l496 !="") |> pull() 
+
+## m296: Please specify where are you currently living
+data |> select(m296) |> filter(m296 !="") |> pull() # There is one person who is living on street, pid 159
+data |> filter(m296=="Streets")
+
+#m396: Pls specify the problems having with the place currently living
+data |> select(m396) |> filter(m396 !="") |> pull() 
+# "Homeless ", "falta de higiene ", "Roaches ","Loud,  narcissistic sociopathic next door neighbor, hallway loitering,  bubble gum and tape like repairs, unwillingness on behalf of superintendents to repairs", "Rent", "Own place", "Rodents "
+
+data |> filter(m396 == "Own place") #pid 177
+
+##p496: Pls specify what is your sexual orientation
+data |> filter(p496 !="") |> select(p496) |> pull() #"nun of your business ", "None"   
+
+##p596: Please specify what is your race
+data |> select(p596) |> filter(p596 !="") |> pull() # "Human"
+
+## "p696": Pls specify What is your current religious affiliation
+data |> select(p696) |> filter(p696!="")
+
+# "Christian ", "Christian. ", "miembro de la iglesia de Jesucristo de los santos de los últimos días "
+# "miembro de la iglesia de Jesucristo de los santos de los últimos días ",
+# "christhen ", "Agnostic ", "Catholic ", "Christian"    
+
+
+#pid 247 chose p6=96, then claimed being Catholic, so we assigned p6==8, and replace p696 empty
+data <- data |> mutate(p6 = ifelse(p696== "Catholic " & p6!=8, 8, p6),
+               p696 = ifelse(p696== "Catholic " & p6==8, "", p696))
+## Correct the typo "Christian ", "Christian. ","christhen " to "Christian"
+data <- data |> mutate(p696 = ifelse(p696 %in% c("Christian ", "Christian. ","christhen "),
+                                     "Christian", p696))
+
+
+##"p1096": Specify highest education level 
+data |> select(p1096) |> filter(p1096 != "") #GED
+
+
+##"p1196": Pls Specify what best describes your current work status
+data |> select(p1196) |> filter(p1196!="") |> pull()
+data <- data |> mutate(p1196 = ifelse(p1196 == "disability ","Disabled", p1196)) 
+##"p1696" 
+
+
+```
+## Exploring Logical Variables 
+
+```{r logical variable, include=FALSE}
+data |> select(where(is.logical)) |> skim() |> select(skim_variable) 
+# Both redcap_survey_identifier, and p796 are entirely NA. We should remove them from analysis 
+data |> select(redcap_survey_identifier) |> view()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
