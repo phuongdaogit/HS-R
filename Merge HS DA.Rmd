@@ -94,6 +94,12 @@ By examining the duplicates individually, we have:<br>
 
 data |> mutate(consumer_name = tolower(str_trim(consumer_name))) |>
   group_by(consumer_name) |> summarise(n_count = n()) |> filter(n_count >1)
+dup_cust_summary <- data |> mutate(consumer_name = tolower(str_trim(consumer_name))) |>
+  group_by(consumer_name) |> summarise(n_count = n()) |> filter(n_count >1) 
+dup_cust_names <- dup_cust_summary |> pull("consumer_name")
+
+data |> filter(consumer_name %in% dup_cust_names)
+
 #Alexa roman
 data |> filter(grepl("alexa roman", consumer_name, ignore.case=TRUE)) |> view() 
 data |> filter(grepl("alexa roman", consumer_name, ignore.case=TRUE)) |>
